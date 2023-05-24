@@ -38,3 +38,10 @@
 *.vcxproj.user
 
 .vs/
+x64/
+
+Debug/
+Release/
+
+#my test project
+testMain/
