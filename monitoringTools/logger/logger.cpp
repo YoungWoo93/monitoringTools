@@ -213,7 +213,7 @@ bool logger::writeLog(const logMessage& msg)
 
 			SetFilePointer(logFile, 0, NULL, FILE_END);
 			DWORD bytesWritten = 0;
-			if (!WriteFile(logFile, textLine.c_str(), textLine.size(), &bytesWritten, NULL)) {
+			if (!WriteFile(logFile, textLine.c_str(), (DWORD)textLine.size(), &bytesWritten, NULL)) {
 				std::cout << "Error writing to file: " << GetLastError() << std::endl;
 				abort();
 				return false;
@@ -243,7 +243,7 @@ bool logger::writeLog(const logMessage& msg)
 
 			SetFilePointer(logFile, 0, NULL, FILE_END);
 			DWORD bytesWritten = 0;
-			if (!WriteFile(logFile, textLine.c_str(), textLine.size(), &bytesWritten, NULL)) {
+			if (!WriteFile(logFile, textLine.c_str(), (DWORD)textLine.size(), &bytesWritten, NULL)) {
 				std::cout << "Error writing to file: " << GetLastError() << std::endl;
 				abort();
 			}
@@ -278,7 +278,7 @@ bool logger::writeLog(const logMessage& msg)
 
 		SetFilePointer(logFile, 0, NULL, FILE_END);
 		DWORD bytesWritten = 0;
-		if (!WriteFile(logFile, csvLine.c_str(), csvLine.size(), &bytesWritten, NULL)) {
+		if (!WriteFile(logFile, csvLine.c_str(), (DWORD)csvLine.size(), &bytesWritten, NULL)) {
 			std::cout << "Error writing to file: " << GetLastError() << std::endl;
 			abort();
 			return false;
