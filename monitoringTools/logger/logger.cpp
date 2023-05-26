@@ -142,7 +142,8 @@ void logger::loggingThreadProc()
 		int ret = WaitForSingleObject(loggingEvent, INFINITE);
 
 		if (ret != WAIT_OBJECT_0) {
-			printf("logging thread Error\n\tWaitForSingleObject return : %d\n\tGetLastError : %d", ret, GetLastError());
+			std::cout << "Error WaitForSingleObject : " << GetLastError() << "\t in logging thread" << std::endl;
+			abort();
 			return;
 		}
 
@@ -184,7 +185,7 @@ bool logger::writeLog(const logMessage& msg)
 	std::string loggingDir = logFileDir + "\\" + std::to_string(LS.days - days);
 	if (!dirCheck(loggingDir)) {
 		std::cout << "Error opening dir: " << GetLastError() << std::endl << loggingDir << std::endl;
-
+		abort();
 		return false;
 	}
 
@@ -206,6 +207,7 @@ bool logger::writeLog(const logMessage& msg)
 			);
 			if (logFile == INVALID_HANDLE_VALUE) {
 				std::cout << "Error opening file: " << GetLastError() << std::endl;
+				abort();
 				return false;
 			}
 
@@ -213,6 +215,7 @@ bool logger::writeLog(const logMessage& msg)
 			DWORD bytesWritten = 0;
 			if (!WriteFile(logFile, textLine.c_str(), textLine.size(), &bytesWritten, NULL)) {
 				std::cout << "Error writing to file: " << GetLastError() << std::endl;
+				abort();
 				return false;
 			}
 			CloseHandle(logFile);
@@ -234,6 +237,7 @@ bool logger::writeLog(const logMessage& msg)
 			);
 			if (logFile == INVALID_HANDLE_VALUE) {
 				std::cout << "Error opening file: " << GetLastError() << std::endl;
+				abort();
 				return false;
 			}
 
@@ -241,6 +245,7 @@ bool logger::writeLog(const logMessage& msg)
 			DWORD bytesWritten = 0;
 			if (!WriteFile(logFile, textLine.c_str(), textLine.size(), &bytesWritten, NULL)) {
 				std::cout << "Error writing to file: " << GetLastError() << std::endl;
+				abort();
 			}
 			CloseHandle(logFile);
 		}
@@ -267,6 +272,7 @@ bool logger::writeLog(const logMessage& msg)
 		);
 		if (logFile == INVALID_HANDLE_VALUE) {
 			std::cout << "Error opening file: " << GetLastError() << std::endl;
+			abort();
 			return false;
 		}
 
@@ -274,6 +280,7 @@ bool logger::writeLog(const logMessage& msg)
 		DWORD bytesWritten = 0;
 		if (!WriteFile(logFile, csvLine.c_str(), csvLine.size(), &bytesWritten, NULL)) {
 			std::cout << "Error writing to file: " << GetLastError() << std::endl;
+			abort();
 			return false;
 		}
 		CloseHandle(logFile);
