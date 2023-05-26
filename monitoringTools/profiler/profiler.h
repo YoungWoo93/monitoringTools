@@ -63,7 +63,7 @@ class performanceProfiler
 private:
     performanceProfiler();
 
-    static performanceProfiler* instance;
+    static performanceProfiler instance;
     static SRWLOCK lock;
 
 public:

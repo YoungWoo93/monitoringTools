@@ -6,7 +6,7 @@
 
 #include "profiler.h"
 
-performanceProfiler* performanceProfiler::instance = nullptr;
+performanceProfiler performanceProfiler::instance;
 thread_local std::map<std::string, profileStruct*>* performanceProfiler::localProfileStroagePointer = nullptr;
 SRWLOCK performanceProfiler::lock;
 
@@ -57,14 +57,14 @@ performanceProfiler::~performanceProfiler()
 
 performanceProfiler* performanceProfiler::getInstence()
 {
-    if (instance == nullptr) {
-        AcquireSRWLockExclusive(&lock);
-        if (instance == nullptr) 
-            instance = new performanceProfiler();
-        ReleaseSRWLockExclusive(&lock);
-    }
+    //if (instance == nullptr) {
+    //    AcquireSRWLockExclusive(&lock);
+    //    if (instance == nullptr) 
+    //        instance = new performanceProfiler();
+    //    ReleaseSRWLockExclusive(&lock);
+    //}
 
-    return instance;
+    return &instance;
 }
 
 
