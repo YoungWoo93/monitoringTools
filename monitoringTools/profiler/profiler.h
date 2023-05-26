@@ -1,8 +1,8 @@
 #pragma once
 
+#include <map>
 #include <Windows.h>
 #include <string>
-#include <map>
 
 struct profileStruct
 {
@@ -64,21 +64,21 @@ private:
     performanceProfiler();
 
     static performanceProfiler* instance;
-    SRWLOCK lock;
+    static SRWLOCK lock;
 
 public:
     ~performanceProfiler();
+
     static performanceProfiler* getInstence();
-
-    std::map<std::string, profileStruct>* addKey(unsigned long long int _key);
-
     static void startProfile(const std::string& name);
     static void endProfile(const std::string& name);
 
-    static void writeProfiles();
+    std::map<std::string, profileStruct*>* addThread();
+    void writeProfiles();
     
 private:
-    std::map<unsigned long long int, std::map<std::string, profileStruct>> containors;
+    static thread_local std::map<std::string, profileStruct*>* localProfileStroagePointer;
+    std::map<unsigned long long int, std::map<std::string, profileStruct*>> containors;
     LARGE_INTEGER Freq;
 };
 
