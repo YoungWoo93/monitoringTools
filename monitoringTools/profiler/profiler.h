@@ -20,9 +20,6 @@ struct profileStruct
         if (_startTime.QuadPart == 0)
             return;
 
-        ++_count;
-        _startTime.QuadPart = 0;
-
         unsigned long long duration = endTime.QuadPart - _startTime.QuadPart;
 
         if (_min[0] > duration)
@@ -46,6 +43,9 @@ struct profileStruct
         else{
             _sum += duration;
         }
+
+        ++_count;
+        _startTime.QuadPart = 0;
 
         return;
     }

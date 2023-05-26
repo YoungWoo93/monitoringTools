@@ -40,7 +40,7 @@ void CSVstringify(const std::vector<std::string>& v, std::string& str)
 
 performanceProfiler::performanceProfiler()
 {
-    
+    QueryPerformanceFrequency(&Freq);
 }
 
 
@@ -129,9 +129,6 @@ void performanceProfiler::writeProfiles()
     struct tm curr_tm;
     time_t t = time(0);
     localtime_s(&curr_tm, &t);
-
-    LARGE_INTEGER Freq;
-    QueryPerformanceFrequency(&Freq);
 
     FILE* file;
     std::string filename = ("["
