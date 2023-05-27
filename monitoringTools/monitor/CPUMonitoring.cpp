@@ -3,6 +3,8 @@
 
 #include "CPUMonitoring.h"
 
+CpuMonitoring CpuMonitoring::instance;
+
 CpuMonitoring::CpuMonitoring()
 {
 	SYSTEM_INFO SystemInfo;
@@ -17,21 +19,30 @@ CpuMonitoring::~CpuMonitoring()
 {
 }
 
+CpuMonitoring* CpuMonitoring::getInstance()
+{
+	return &instance;
+}
+
 void CpuMonitoring::addThreadMonitor(const std::string& name)
 {
 	HANDLE hCurrentThreadReal;
 	
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &hCurrentThreadReal, 0, FALSE, DUPLICATE_SAME_ACCESS);
 
+	m.lock();
 	threadHandleList[name + "(" + std::to_string(GetCurrentThreadId()) + ")"] = hCurrentThreadReal;
+	m.unlock();
 }
 
 void CpuMonitoring::removeThreadMonitor(const std::string& name)
 {
 	CloseHandle(threadHandleList[name + "(" + std::to_string(GetCurrentThreadId()) + ")"]);
 
+	m.lock();
 	threadHandleList.erase(name + "(" + std::to_string(GetCurrentThreadId()) + ")");
 	threadCpuRate.erase(name + "(" + std::to_string(GetCurrentThreadId()) + ")");
+	m.unlock();
 }
 
 void CpuMonitoring::update()
@@ -118,16 +129,16 @@ void CpuMonitoring::updateThreads()
 		ULONGLONG kernelDiff = kernel.QuadPart - threadPastTime[it.first].kernel.QuadPart;
 		ULONGLONG UserDiff = user.QuadPart - threadPastTime[it.first].user.QuadPart;
 		ULONGLONG TimeDiff = nowTime.QuadPart - threadPastTime[it.first].optional.QuadPart;
+		ULONGLONG Total = kernelDiff + UserDiff;
 
 		threadPastTime[it.first].kernel = kernel;
 		threadPastTime[it.first].user = user;
 		threadPastTime[it.first].optional = nowTime;
 
-
-		ULONGLONG Total = kernelDiff + UserDiff;
-
+		m.lock();
 		threadCpuRate[it.first].total = (float)(Total / (double)TimeDiff * 100.0f);
 		threadCpuRate[it.first].kernelMode = (float)(kernelDiff / (double)TimeDiff * 100.0f);
 		threadCpuRate[it.first].userMode = (float)(UserDiff / (double)TimeDiff * 100.0f);
+		m.unlock();
 	}
 }
