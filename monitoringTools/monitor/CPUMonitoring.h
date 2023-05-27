@@ -5,8 +5,9 @@
 #include <string>
 #include <mutex>
 
-class PDHMonitor;
+#define monitoringCurrentThread(name)	CPUMonitorScope __CPUMonitorScope(name)
 
+class resourceMonitor;
 
 struct CPUTimeRate
 {
@@ -26,7 +27,7 @@ struct CPUTime
 
 class CpuMonitoring
 {
-	friend class PDHMonitor;
+	friend class resourceMonitor;
 private:
 	CpuMonitoring();
 	static CpuMonitoring instance;
