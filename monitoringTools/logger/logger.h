@@ -74,7 +74,7 @@ public:
 	logLevel levelThreshold;
 	std::string logFileDir;
 
-	std::thread loggingThread;
+	std::thread* loggingThread;
 	HANDLE hThread;
 	HANDLE loggingEvent;
 

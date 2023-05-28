@@ -62,7 +62,7 @@ bool dirCheck(const std::string& dir)
 }
 
 
-logger::logger() :loggingThread(&logger::loggingThreadProc, this){
+logger::logger(){
 	unsigned long long int msTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 	int ms = msTime % 1000;
 	msTime /= 1000;
@@ -99,6 +99,7 @@ logger::logger() :loggingThread(&logger::loggingThreadProc, this){
 	}
 
 	runFlag = true;
+	loggingThread = new std::thread(&logger::loggingThreadProc, this);
 }
 logger::~logger() {
 	runFlag = false;
@@ -116,7 +117,7 @@ logger::~logger() {
 	//  (logger 객체가 전역에 존재한다는 전제이므로 싱글톤이 전제되어야한다 vs 혼자 사용하는데 꼭 필요한가?)
 	//		=> 로그를 요청하는 writeReq 자체를 전역을 대상으로 동작하게 강제하여 임시 해결
 
-	loggingThread.join();
+	loggingThread->join();
 
 	while (!logMessagePool.empty()) {
 		delete logMessagePool.top();
