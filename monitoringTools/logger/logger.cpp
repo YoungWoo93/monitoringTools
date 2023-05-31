@@ -64,23 +64,9 @@ bool dirCheck(const std::string& dir)
 
 logger::logger(){
 	unsigned long long int msTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-	int ms = msTime % 1000;
-	msTime /= 1000;
-	int sec = msTime % 60;
-	msTime /= 60;
-	int min = msTime % 60;
-	msTime /= 60;
-	msTime += 9;
-	int hour = msTime % 24;
-
-	days = (unsigned int)(msTime / 24);
-
-
 	std::stringstream dirName;
-	dirName << std::setw(2) << std::setfill('0') << days << '_'
-		<< std::setw(2) << std::setfill('0') << hour << '-'
-		<< std::setw(2) << std::setfill('0') << min << '-'
-		<< std::setw(2) << std::setfill('0') << sec;
+
+	dirName << "LOG\\" << msTime;
 
 	setLoggingDir(dirName.str());
 	setLoggingLevel(logLevel::Debug);
