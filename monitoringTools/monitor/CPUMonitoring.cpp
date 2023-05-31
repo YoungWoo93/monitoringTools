@@ -61,12 +61,15 @@ void CpuMonitoring::updateProcessor()
 	if (GetSystemTimes((PFILETIME)&idle, (PFILETIME)&kernel, (PFILETIME)&user) == false)
 		return;
 
+	processorPastTime.kernel = kernel;
+	processorPastTime.user = user;
+	processorPastTime.optional = idle;
+
+
 	ULONGLONG kernelDiff = kernel.QuadPart - processorPastTime.kernel.QuadPart;
 	ULONGLONG UserDiff = user.QuadPart - processorPastTime.user.QuadPart;
 	ULONGLONG idleDiff = idle.QuadPart - processorPastTime.optional.QuadPart;
-
 	ULONGLONG Total = kernelDiff + UserDiff;
-
 
 	if (Total == 0) {
 		allCpuRate.total = 0.0f;
@@ -78,10 +81,6 @@ void CpuMonitoring::updateProcessor()
 		allCpuRate.userMode = (float)((double)UserDiff / Total * 100.0f);
 		allCpuRate.kernelMode = (float)((double)(kernelDiff - idleDiff) / Total * 100.0f);
 	}
-
-	processorPastTime.kernel = kernel;
-	processorPastTime.user = user;
-	processorPastTime.optional = idle;
 }
 
 
@@ -122,6 +121,7 @@ void CpuMonitoring::updateThreads()
 
 	GetSystemTimeAsFileTime((LPFILETIME)&nowTime);
 
+	m.lock();
 	for (auto it : threadHandleList)
 	{
 		auto ret = GetThreadTimes(it.second, (LPFILETIME)&temp, (LPFILETIME)&temp, (LPFILETIME)&kernel, (LPFILETIME)&user);
@@ -135,10 +135,9 @@ void CpuMonitoring::updateThreads()
 		threadPastTime[it.first].user = user;
 		threadPastTime[it.first].optional = nowTime;
 
-		m.lock();
 		threadCpuRate[it.first].total = (float)(Total / (double)TimeDiff * 100.0f);
 		threadCpuRate[it.first].kernelMode = (float)(kernelDiff / (double)TimeDiff * 100.0f);
 		threadCpuRate[it.first].userMode = (float)(UserDiff / (double)TimeDiff * 100.0f);
-		m.unlock();
 	}
+	m.unlock();
 }
