@@ -44,19 +44,16 @@ void CSVstringify(const logStructure& logStr, std::string& str)
 	}
 	str += "\n";
 }
-bool createDirectoryNotExists(const std::string& dir) {
-	char currentPath[MAX_PATH];
-	if (GetCurrentDirectoryA(MAX_PATH, currentPath) == 0)
-		return false;
+bool createDirectoryNotExists(std::string& dir) {
+	dir += "\\";
 
-	std::string path;
-	path = currentPath;
-	path += "\\";
-	path += dir;
-		
-	if (CreateDirectoryA(path.c_str(), NULL) == 0){
-		if (GetLastError() != ERROR_ALREADY_EXISTS)
-			return false;
+	for (size_t pos = dir.find('\\', 0); pos != std::string::npos; pos = dir.find('\\', pos + 1))
+	{
+		std::string temp = dir.substr(0, pos);
+		if (CreateDirectoryA(dir.substr(0, pos).c_str(), NULL) == 0) {
+			if (GetLastError() != ERROR_ALREADY_EXISTS)
+				return false;
+		}
 	}
 
 	return true;
@@ -86,14 +83,17 @@ bool writeFile(const std::string& fileName, const std::string& line)
 	}
 
 	CloseHandle(logFile);
+
+	return true;
 }
 
-logger::logger(logLevel _loggingLevel) : loggingLevel(_loggingLevel){
-	unsigned long long int msTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-
+logger::logger(logLevel _loggingLevel) : loggingLevel(_loggingLevel)
+{
 	std::stringstream dirName;
+	unsigned long long int msTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 	dirName << "LOG\\" << msTime;
 
+	days = (msTime = (msTime /= 3600000) + 9) / 24;
 	setLoggingDir(dirName.str());
 
 	InitializeCriticalSection(&queueCS);
@@ -194,9 +194,9 @@ void logger::loggingThreadProc()
 bool logger::writeLog(const logMessage& msg)
 {
 	std::ofstream logFile;
-	logStructure LS(msg);
+	logStructure logBlock(msg);
 
-	std::string loggingDir = logFileDir + "\\" + std::to_string(LS.days - days);
+	std::string loggingDir = logFileDir + "\\" + std::to_string(logBlock.days - days);
 	if (!createDirectoryNotExists(loggingDir)) {
 		std::cout << "Error opening dir: " << GetLastError() << std::endl << loggingDir << std::endl;
 		return false;
@@ -205,16 +205,16 @@ bool logger::writeLog(const logMessage& msg)
 	if (msg.writeMode & LO_TXT)
 	{
 		std::string textLine;
-		TEXTstringify(LS, textLine);
+		TEXTstringify(logBlock, textLine);
 
 		//default Logging
-		std::string defaultFileName(loggingDir + "\\defaultLog.txt");
+		std::string defaultFileName(loggingDir + "defaultLog.txt");
 		if (!writeFile(defaultFileName, textLine))
 			return false;
 
 		//target File logging
 		if (msg.logWriteFileName != ""){
-			std::string fileName(loggingDir + "\\" + msg.logWriteFileName + ".txt");
+			std::string fileName(loggingDir + msg.logWriteFileName + ".txt");
 			if(!writeFile(fileName, textLine))
 				return false;
 		}
@@ -223,12 +223,12 @@ bool logger::writeLog(const logMessage& msg)
 	{
 		std::string csvLine;
 		std::string fileName;
-		CSVstringify(LS, csvLine);
+		CSVstringify(logBlock, csvLine);
 
 		if (msg.logWriteFileName == "")
-			fileName = std::string(loggingDir + "\\default.csv");
+			fileName = std::string(loggingDir + "default.csv");
 		else
-			fileName = std::string(loggingDir + "\\" + msg.logWriteFileName + ".csv");
+			fileName = std::string(loggingDir + msg.logWriteFileName + ".csv");
 
 		if(!writeFile(fileName, csvLine))
 			return false;
@@ -236,7 +236,7 @@ bool logger::writeLog(const logMessage& msg)
 	if (msg.writeMode & LO_CMD)
 	{
 		std::string textLine;
-		TEXTstringify(LS, textLine);
+		TEXTstringify(logBlock, textLine);
 
 		std::cout << textLine.c_str();
 	}
@@ -246,7 +246,8 @@ bool logger::writeLog(const logMessage& msg)
 
 bool logger::setLoggingDir(const std::string& _logFileDir) {
 	char fullPath[MAX_PATH];
-	_fullpath(fullPath, _logFileDir.c_str(), MAX_PATH);
+	if(_fullpath(fullPath, _logFileDir.c_str(), MAX_PATH) == nullptr)
+		return false;
 
 	logFileDir = std::string(fullPath);
 
