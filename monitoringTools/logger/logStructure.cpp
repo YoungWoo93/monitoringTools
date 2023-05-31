@@ -23,13 +23,9 @@ void logStructure::timeParser(const std::chrono::system_clock::time_point& tp)
 
 	unsigned long long int msTime = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch()).count();
 	int ms = msTime % 1000;
-	msTime /= 1000;
-	int sec = msTime % 60;
-	msTime /= 60;
-	int min = msTime % 60;
-	msTime /= 60;
-	msTime += 9;
-	int hour = msTime % 24;
+	int sec = (msTime /= 1000) % 60;
+	int min = (msTime /= 60) % 60;
+	int hour = (msTime = (msTime /= 60) + 9) % 24;
 
 	days = (unsigned int)(msTime / 24);
 
@@ -53,6 +49,9 @@ void logStructure::logLevelParser(const logLevel level)
 {
 	switch (level)
 	{
+	case logLevel::Off:
+		_level = "[ OFF ]";
+		break;
 	case logLevel::Fatal:
 		_level = "[Fatal]";
 		break;

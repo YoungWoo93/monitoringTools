@@ -44,23 +44,49 @@ void CSVstringify(const logStructure& logStr, std::string& str)
 	}
 	str += "\n";
 }
-bool dirCheck(const std::string& dir)
-{
-	DWORD attribute = GetFileAttributesA(dir.c_str());
+bool createDirectoryNotExists(const std::string& dir) {
+	char currentPath[MAX_PATH];
+	if (GetCurrentDirectoryA(MAX_PATH, currentPath) == 0)
+		return false;
 
-	if (attribute == INVALID_FILE_ATTRIBUTES || !(attribute & FILE_ATTRIBUTE_DIRECTORY))
-	{
-		std::string subDir(dir.begin(), dir.begin() + dir.rfind('\\'));
-
-		if (dirCheck(subDir))
-			return CreateDirectoryA(dir.c_str(), NULL) != 0;
-		else
+	std::string path;
+	path = currentPath;
+	path += "\\";
+	path += dir;
+		
+	if (CreateDirectoryA(path.c_str(), NULL) == 0){
+		if (GetLastError() != ERROR_ALREADY_EXISTS)
 			return false;
 	}
 
 	return true;
 }
 
+bool writeFile(const std::string& fileName, const std::string& line)
+{
+	HANDLE logFile = CreateFileA(
+		fileName.c_str(),
+		GENERIC_WRITE,
+		FILE_SHARE_READ,
+		NULL,
+		OPEN_ALWAYS,
+		FILE_ATTRIBUTE_NORMAL,
+		NULL
+	);
+	if (logFile == INVALID_HANDLE_VALUE) {
+		std::cout << "Error opening file: " << GetLastError() << std::endl;
+		return false;
+	}
+
+	SetFilePointer(logFile, 0, NULL, FILE_END);
+	DWORD bytesWritten = 0;
+	if (!WriteFile(logFile, line.c_str(), (DWORD)line.size(), &bytesWritten, NULL)) {
+		std::cout << "Error writing to file: " << GetLastError() << std::endl;
+		return false;
+	}
+
+	CloseHandle(logFile);
+}
 
 logger::logger(logLevel _loggingLevel) : loggingLevel(_loggingLevel){
 	unsigned long long int msTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -149,8 +175,10 @@ void logger::loggingThreadProc()
 				msg = localQueue.front();
 				localQueue.pop();
 
-				if(!writeLog(*msg))
+				if (!writeLog(*msg)) {
+					abort();
 					return;
+				}
 
 				EnterCriticalSection(&poolCS);
 				logMessagePool.push(msg);
@@ -169,9 +197,8 @@ bool logger::writeLog(const logMessage& msg)
 	logStructure LS(msg);
 
 	std::string loggingDir = logFileDir + "\\" + std::to_string(LS.days - days);
-	if (!dirCheck(loggingDir)) {
+	if (!createDirectoryNotExists(loggingDir)) {
 		std::cout << "Error opening dir: " << GetLastError() << std::endl << loggingDir << std::endl;
-		abort();
 		return false;
 	}
 
@@ -179,61 +206,17 @@ bool logger::writeLog(const logMessage& msg)
 	{
 		std::string textLine;
 		TEXTstringify(LS, textLine);
+
 		//default Logging
 		std::string defaultFileName(loggingDir + "\\defaultLog.txt");
-		{
-			HANDLE logFile = CreateFileA(
-				defaultFileName.c_str(),
-				GENERIC_WRITE,
-				FILE_SHARE_READ,
-				NULL,
-				OPEN_ALWAYS,
-				FILE_ATTRIBUTE_NORMAL,
-				NULL
-			);
-			if (logFile == INVALID_HANDLE_VALUE) {
-				std::cout << "Error opening file: " << GetLastError() << std::endl;
-				abort();
-				return false;
-			}
+		if (!writeFile(defaultFileName, textLine))
+			return false;
 
-			SetFilePointer(logFile, 0, NULL, FILE_END);
-			DWORD bytesWritten = 0;
-			if (!WriteFile(logFile, textLine.c_str(), (DWORD)textLine.size(), &bytesWritten, NULL)) {
-				std::cout << "Error writing to file: " << GetLastError() << std::endl;
-				abort();
-				return false;
-			}
-			CloseHandle(logFile);
-		}
-
-
-		std::string fileName(loggingDir + "\\" + msg.logWriteFileName + ".txt");
 		//target File logging
-		if (msg.logWriteFileName != "")
-		{
-			HANDLE logFile = CreateFileA(
-				fileName.c_str(),
-				GENERIC_WRITE,
-				FILE_SHARE_READ,
-				NULL,
-				OPEN_ALWAYS,
-				FILE_ATTRIBUTE_NORMAL,
-				NULL
-			);
-			if (logFile == INVALID_HANDLE_VALUE) {
-				std::cout << "Error opening file: " << GetLastError() << std::endl;
-				abort();
+		if (msg.logWriteFileName != ""){
+			std::string fileName(loggingDir + "\\" + msg.logWriteFileName + ".txt");
+			if(!writeFile(fileName, textLine))
 				return false;
-			}
-
-			SetFilePointer(logFile, 0, NULL, FILE_END);
-			DWORD bytesWritten = 0;
-			if (!WriteFile(logFile, textLine.c_str(), (DWORD)textLine.size(), &bytesWritten, NULL)) {
-				std::cout << "Error writing to file: " << GetLastError() << std::endl;
-				abort();
-			}
-			CloseHandle(logFile);
 		}
 	}
 	if (msg.writeMode & LO_CSV)
@@ -247,42 +230,21 @@ bool logger::writeLog(const logMessage& msg)
 		else
 			fileName = std::string(loggingDir + "\\" + msg.logWriteFileName + ".csv");
 
-		HANDLE logFile = CreateFileA(
-			fileName.c_str(),
-			GENERIC_WRITE,
-			FILE_SHARE_READ,
-			NULL,
-			OPEN_ALWAYS,
-			FILE_ATTRIBUTE_NORMAL,
-			NULL
-		);
-		if (logFile == INVALID_HANDLE_VALUE) {
-			std::cout << "Error opening file: " << GetLastError() << std::endl;
-			abort();
+		if(!writeFile(fileName, csvLine))
 			return false;
-		}
-
-		SetFilePointer(logFile, 0, NULL, FILE_END);
-		DWORD bytesWritten = 0;
-		if (!WriteFile(logFile, csvLine.c_str(), (DWORD)csvLine.size(), &bytesWritten, NULL)) {
-			std::cout << "Error writing to file: " << GetLastError() << std::endl;
-			abort();
-			return false;
-		}
-		CloseHandle(logFile);
 	}
 	if (msg.writeMode & LO_CMD)
 	{
 		std::string textLine;
-
 		TEXTstringify(LS, textLine);
+
 		std::cout << textLine.c_str();
 	}
 
 	return true;
 }
 
-bool			logger::setLoggingDir(const std::string& _logFileDir) {
+bool logger::setLoggingDir(const std::string& _logFileDir) {
 	char fullPath[MAX_PATH];
 	_fullpath(fullPath, _logFileDir.c_str(), MAX_PATH);
 
@@ -290,19 +252,19 @@ bool			logger::setLoggingDir(const std::string& _logFileDir) {
 
 	return true;
 }
-std::string		logger::getLoggingDir() {
+std::string logger::getLoggingDir() {
 	return logFileDir;
 }
 
 //bool			setLoggingDBA(const std::string logDBA);
 //std::string	getLoggingDBA();
 
-bool			logger::setLoggingLevel(const logLevel _loggingLevel) {
+bool logger::setLoggingLevel(const logLevel _loggingLevel) {
 	loggingLevel = _loggingLevel;
 
 	return true;
 }
-logLevel		logger::getLoggingLevel() {
+logLevel logger::getLoggingLevel() {
 	return loggingLevel;
 }
 
