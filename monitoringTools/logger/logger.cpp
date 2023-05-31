@@ -10,9 +10,10 @@
 #include <thread>
 #include <Windows.h>
 
+#include "../dump.h"
+
 #include "logger.h"
 #include "logStructure.h"
-
 logger g_mylogger;
 
 void TEXTstringify(const logStructure& logStr, std::string& str)
@@ -106,7 +107,7 @@ logger::logger(logLevel _loggingLevel) : loggingLevel(_loggingLevel)
 	if (loggingEvent == (HANDLE)(-1))
 	{
 		std::cout << "create logging event fail, Error " << GetLastError() << std::endl;
-		abort();
+		dump::crash();
 	}
 
 	runFlag = true;
@@ -155,7 +156,7 @@ void logger::loggingThreadProc()
 
 		if (ret != WAIT_OBJECT_0) {
 			std::cout << "Error WaitForSingleObject : " << GetLastError() << "\t in logging thread" << std::endl;
-			abort();
+			dump::crash();
 			return;
 		}
 
@@ -176,7 +177,7 @@ void logger::loggingThreadProc()
 				localQueue.pop();
 
 				if (!writeLog(*msg)) {
-					abort();
+					dump::crash();
 					return;
 				}
 

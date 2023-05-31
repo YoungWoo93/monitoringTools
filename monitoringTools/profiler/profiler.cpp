@@ -95,7 +95,7 @@ void performanceProfiler::startProfile(const std::string& name)
     }
     else if (target->second->_startTime.QuadPart != 0) {
         std::cout << "profile name overlapped : " << name << std::endl;
-        abort();
+        return;
     }
     LARGE_INTEGER timePoint;
     QueryPerformanceCounter(&timePoint);
@@ -119,7 +119,7 @@ void performanceProfiler::endProfile(const std::string& name)
     }
     else if (target->second->_startTime.QuadPart == 0) {
         std::cout << "profile name mismatch : " << name << std::endl;
-        abort();
+        return;
     }
 
     (*localProfileStroagePointer)[name]->update(timePoint);
