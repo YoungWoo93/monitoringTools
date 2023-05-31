@@ -72,13 +72,14 @@ std::map<std::string, profileStruct*>* performanceProfiler::addThread()
 {
 	unsigned long long int threadKey = (GetTickCount64() << 32) | (unsigned long long int)GetCurrentThreadId();
 
+	AcquireSRWLockExclusive(&lock);
 	if (containors.find(threadKey) == containors.end()) {
-		AcquireSRWLockExclusive(&lock);
 		containors[threadKey] = std::map<std::string, profileStruct*>();
-		ReleaseSRWLockExclusive(&lock);
 	}
+    auto ret = &containors[threadKey];
+	ReleaseSRWLockExclusive(&lock);
 
-	return &containors[threadKey];
+	return ret;
 }
 
 
