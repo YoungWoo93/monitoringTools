@@ -14,11 +14,13 @@ void writeReq(const std::string& _logCppName,
 	if (!g_mylogger.runFlag)
 		return;
 
-	if ((int)g_mylogger.levelThreshold < (int)_level)
+	if ((int)g_mylogger.getLoggingLevel() < (int)_level)
 		return;
 
 	EnterCriticalSection(&g_mylogger.poolCS);
 	if (g_mylogger.logMessagePool.empty()){
+		// 로깅이 지연되는상황, 현재는 계속 더 늘려주려는 의도를 가지고있음.
+		// 하지만 정책적으로 항상 가능 할 수는 없다면?
 		for (int i = 0; i < 1000; i++)
 			g_mylogger.logMessagePool.push(new logMessage);
 	}

@@ -62,14 +62,13 @@ bool dirCheck(const std::string& dir)
 }
 
 
-logger::logger(){
+logger::logger(logLevel _loggingLevel) : loggingLevel(_loggingLevel){
 	unsigned long long int msTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-	std::stringstream dirName;
 
+	std::stringstream dirName;
 	dirName << "LOG\\" << msTime;
 
 	setLoggingDir(dirName.str());
-	setLoggingLevel(logLevel::Debug);
 
 	InitializeCriticalSection(&queueCS);
 	InitializeCriticalSection(&poolCS);
@@ -298,13 +297,13 @@ std::string		logger::getLoggingDir() {
 //bool			setLoggingDBA(const std::string logDBA);
 //std::string	getLoggingDBA();
 
-bool			logger::setLoggingLevel(const logLevel _levelThreshold) {
-	levelThreshold = _levelThreshold;
+bool			logger::setLoggingLevel(const logLevel _loggingLevel) {
+	loggingLevel = _loggingLevel;
 
 	return true;
 }
 logLevel		logger::getLoggingLevel() {
-	return levelThreshold;
+	return loggingLevel;
 }
 
 

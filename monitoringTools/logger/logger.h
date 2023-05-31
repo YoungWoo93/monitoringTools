@@ -13,6 +13,7 @@
 #define LO_CMD           0x08
 
 enum class logLevel {
+	Off,
 	Fatal,
 	Error,
 	Warning,
@@ -51,7 +52,7 @@ struct logMessage {
 
 class logger {
 public:
-	logger();
+	logger(logLevel _loggingLevel = logLevel::Debug);
 	~logger();
 
 	bool			writeLog(const logMessage& msg);
@@ -62,7 +63,7 @@ public:
 	//bool			setLoggingDBA(const std::string logDBA);
 	//std::string	getLoggingDBA();
 
-	bool			setLoggingLevel(const logLevel _levelThreshold);
+	bool			setLoggingLevel(const logLevel _loggingLevel);
 	logLevel		getLoggingLevel();
 
 	void loggingThreadProc();
@@ -71,7 +72,7 @@ public:
 	bool runFlag;
 	unsigned int days;
 
-	logLevel levelThreshold;
+	logLevel loggingLevel;
 	std::string logFileDir;
 
 	std::thread* loggingThread;
