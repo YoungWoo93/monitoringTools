@@ -118,5 +118,3 @@ public:
 
 	static int dumpCount;
 };
-
-int dump::dumpCount = 0;

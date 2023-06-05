@@ -94,7 +94,7 @@ logger::logger(logLevel _loggingLevel) : loggingLevel(_loggingLevel)
 	unsigned long long int msTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 	dirName << "LOG\\" << msTime;
 
-	days = (msTime = (msTime /= 3600000) + 9) / 24;
+	days = (unsigned int)((msTime = (msTime /= 3600000) + 9) / 24);
 	setLoggingDir(dirName.str());
 
 	InitializeCriticalSection(&queueCS);

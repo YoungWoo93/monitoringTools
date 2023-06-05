@@ -61,15 +61,15 @@ void CpuMonitoring::updateProcessor()
 	if (GetSystemTimes((PFILETIME)&idle, (PFILETIME)&kernel, (PFILETIME)&user) == false)
 		return;
 
-	processorPastTime.kernel = kernel;
-	processorPastTime.user = user;
-	processorPastTime.optional = idle;
-
 
 	ULONGLONG kernelDiff = kernel.QuadPart - processorPastTime.kernel.QuadPart;
 	ULONGLONG UserDiff = user.QuadPart - processorPastTime.user.QuadPart;
 	ULONGLONG idleDiff = idle.QuadPart - processorPastTime.optional.QuadPart;
 	ULONGLONG Total = kernelDiff + UserDiff;
+
+	processorPastTime.kernel = kernel;
+	processorPastTime.user = user;
+	processorPastTime.optional = idle;
 
 	if (Total == 0) {
 		allCpuRate.total = 0.0f;
